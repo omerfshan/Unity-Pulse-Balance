@@ -66,5 +66,5 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj"
     },
-    "dotnet.defaultSolution": "PulseBalance.slnx"
+    "dotnet.defaultSolution": "Unity-Pulse-Balance.slnx"
 }

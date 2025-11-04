@@ -1,109 +1,136 @@
-using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class PulseController : MonoBehaviour
 {
-    [Header("Mouse Kontrollü (Hearth)")]
+    [Header("Refs")]
+    [SerializeField] private Transform heartT;  
+    [SerializeField] private Transform limitT;   
+
+    [Header("Heart (Player)")]
     [SerializeField] private float growSpeed = 2f;
     [SerializeField] private float shrinkSpeed = 2f;
-    [SerializeField] private float smooth = 5f;
-    [SerializeField] private GameObject Hearth;          // Mouse ile kontrol edilen
+    [SerializeField] private float heartSmooth = 8f;
+    [SerializeField] private float heartMin = 0.5f;
+    [SerializeField] private float heartMax = 10f;
+    [SerializeField] private float heartStart = 1f;
 
-    [Header("Rastgele (limit)")]
-    [SerializeField] private GameObject limit;           // Kendi kendine nefes alan
-    [SerializeField] private Vector2 globalMinMax = new Vector2(0.3f, 10f); // her döngü için genel ölçek çarpanı aralığı
-    [SerializeField] private float speed = 1f;           // random hedefe yaklaşma hızı (küçük = yavaş)
-    [SerializeField] private Vector2 waitRange = new Vector2(0.5f, 2f); // hedefe varınca bekleme aralığı (sn)
+    [Header("Limit (Auto)")]
+    [SerializeField] private float limitMin = 1f;
+    [SerializeField] private float limitMax = 10f;
+    [SerializeField] private float limitStart = 1.5f;
+    [SerializeField] private float limitMoveSpeed = 0.4f;
+    [SerializeField] private Vector2 limitWaitRange = new Vector2(0.8f, 1.8f);
 
-    // --- Hearth (mouse) state ---
-    private Transform heartT;
-    private Vector3 heartBaseScale;
-    private float heartCurrent = 0.1f;   // baseScale çarpanı
-    private float heartTarget = 1f;
+    [Header("Events")]
+    public UnityEvent onGameOver;
 
-    // --- limit (random) state ---
-    private Transform limitT;
-    private Vector3 limitBaseScale;
-    private float randCurrent = 1f;    // baseScale çarpanı
-    private float randTarget = 1f;
-    private float waitTimer = 0f;
-    private float localMin, localMax;  // her döngüde değişen min/max
+    private float heartTarget, heartCurrent;
+    private float limitTarget, limitCurrent;
+    private float limitWaitTimer;
+    private bool gameOver = false;
 
-    void Awake()
+    private Vector3 heartBaseScale, limitBaseScale;
+
+    void Start()
     {
-        heartT = Hearth != null ? Hearth.transform : transform;
-        limitT =  limit  != null ? limit.transform  : transform;
+        if (!heartT || !limitT)
+        {
+            Debug.LogError("PulseController: heartT ve limitT atanmamış!");
+            enabled = false;
+            return;
+        }
 
-        heartBaseScale = heartT.localScale;
-        limitBaseScale = limitT.localScale;
+        heartBaseScale = heartT.localScale / Mathf.Max(heartT.localScale.x, 0.0001f);
+        limitBaseScale = limitT.localScale / Mathf.Max(limitT.localScale.x, 0.0001f);
 
-        // İlk random aralığı ve hedefi kur
-        SetNewRandomRange();
-        PickNewTarget();
+        heartTarget = heartCurrent = heartStart;
+        limitTarget = limitCurrent = limitStart;
 
-        // Başlangıçları mevcut boyuta göre ayarla (çarpan)
-        heartCurrent = 1f;
-        randCurrent  = 1f;
+        ResetLimitTimer();
+        ApplyScalesImmediate();
     }
 
     void Update()
     {
-        UpdateHeart();   // Mouse kontrollü
-        UpdateRandom();  // Kendi kendine nefes
-    }
+        if (gameOver) return;
 
-    // ---------------- HEART (Mouse kontrollü) ----------------
-    private void UpdateHeart()
-    {
-        if (Input.GetMouseButton(0))
-            heartTarget += growSpeed * Time.deltaTime;   // büyü
-        else
-            heartTarget -= shrinkSpeed * Time.deltaTime; // küçül
-
-        // Negatif/çok küçük değeri engelle (çarpan mantığı)
-        heartTarget = Mathf.Max(heartTarget, 0.01f);
-
-        // Smooth yaklaşım
-        heartCurrent = Mathf.Lerp(heartCurrent, heartTarget, Time.deltaTime * smooth);
+        UpdateHeart();
+        UpdateLimit();
+        CheckGameOver();
 
         // Uygula
         heartT.localScale = heartBaseScale * heartCurrent;
+        limitT.localScale = limitBaseScale * limitCurrent;
     }
 
-    // ---------------- LIMIT (Rastgele nefes) ----------------
-    private void UpdateRandom()
+    // ---------------- HEART ----------------
+    private void UpdateHeart()
     {
-        if (waitTimer > 0f)
+        // Basılıysa büyü, değilse küçül
+        if (Input.GetMouseButton(0))
+            heartTarget += growSpeed * Time.deltaTime;
+        else
+            heartTarget -= shrinkSpeed * Time.deltaTime;
+
+        // Sınırla
+        heartTarget = Mathf.Clamp(heartTarget, heartMin, heartMax);
+
+        // Yumuşat
+        heartCurrent = Mathf.Lerp(heartCurrent, heartTarget, Time.deltaTime * heartSmooth);
+    }
+
+    // ---------------- LIMIT ----------------
+    private void UpdateLimit()
+    {
+        limitWaitTimer -= Time.deltaTime;
+
+        // Hedefe ulaştıysa veya bekleme süresi bitti ise yeni hedef seç
+        if (limitWaitTimer <= 0f || Mathf.Abs(limitCurrent - limitTarget) < 0.01f)
         {
-            waitTimer -= Time.deltaTime;
+            limitTarget = Random.Range(limitMin, limitMax);
+            ResetLimitTimer();
+        }
+
+        // Hedefe doğru yavaşça ilerle
+        limitCurrent = Mathf.MoveTowards(limitCurrent, limitTarget, limitMoveSpeed * Time.deltaTime);
+        limitCurrent = Mathf.Clamp(limitCurrent, limitMin, limitMax);
+    }
+
+    // ---------------- CHECK GAME OVER ----------------
+    private void CheckGameOver()
+    {
+        // Kalp minimuma düştü mü?
+        if (heartTarget <= heartMin + 0.001f)
+        {
+            GameOver("Kalp 0.5'e düştü!");
             return;
         }
 
-        randCurrent = Mathf.Lerp(randCurrent, randTarget, Time.deltaTime * speed);
-        limitT.localScale = limitBaseScale * randCurrent;
-
-        if (Mathf.Abs(randCurrent - randTarget) < 0.02f)
+        // Kalp limiti geçti mi?
+        if (heartCurrent > limitCurrent)
         {
-            SetNewRandomRange();              // her döngüde yeni min/max
-            PickNewTarget();                  // o aralıkta yeni hedef
-            waitTimer = Random.Range(waitRange.x, waitRange.y);
+            GameOver("Kalp limiti aştı!");
+            return;
         }
     }
 
-    private void SetNewRandomRange()
+    // ---------------- HELPERS ----------------
+    private void GameOver(string reason)
     {
-        // global aralıktan iki rastgele değer seç → küçük olan min, büyük olan max
-        float a = Random.Range(globalMinMax.x, globalMinMax.y);
-        float b = Random.Range(globalMinMax.x, globalMinMax.y);
-        localMin = Mathf.Min(a, b);
-        localMax = Mathf.Max(a, b);
-
-        // Güvenlik: çok küçük olmasın
-        localMin = Mathf.Max(localMin, 0.01f);
+        gameOver = true;
+        Debug.Log($"GAME OVER: {reason}");
+        onGameOver?.Invoke();
     }
 
-    private void PickNewTarget()
+    private void ResetLimitTimer()
     {
-        randTarget = Random.Range(localMin, localMax);
+        limitWaitTimer = Random.Range(limitWaitRange.x, limitWaitRange.y);
+    }
+
+    private void ApplyScalesImmediate()
+    {
+        heartT.localScale = heartBaseScale * heartCurrent;
+        limitT.localScale = limitBaseScale * limitCurrent;
     }
 }

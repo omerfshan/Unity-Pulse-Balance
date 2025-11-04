@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b067807621abe2142b2b907ef945a831
+guid: 73a64d507937d46fc8dd3ab704bc8eb8
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7475117912363941503
-    second: Hearht_0
+      213: -7143695874367414961
+    second: '[CITYPNG.COM]White Outline Circle Transparent Background - 1500x1500_0'
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -96,40 +96,27 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: Android
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Hearht_0
+      name: '[CITYPNG.COM]White Outline Circle Transparent Background - 1500x1500_0'
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1331
-        height: 1163
+        x: 151
+        y: 150
+        width: 1199
+        height: 1199
       alignment: 9
-      pivot: {x: 0.5, y: 0.45}
+      pivot: {x: 0.5, y: 0.4}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 18143631ddb034890800000000000000
-      internalID: -7475117912363941503
+      spriteID: f4d18e0837e7cdc90800000000000000
+      internalID: -7143695874367414961
       vertices: []
       indices: 
       edges: []
@@ -138,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 9c2a04de5ba9849f8881fca15a0a48e1
+    spriteID: 6e6cd666cf11a465abdafc98e4577e97
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Hearht_0: -7475117912363941503
+      '[CITYPNG.COM]White Outline Circle Transparent Background - 1500x1500_0': -7143695874367414961
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
